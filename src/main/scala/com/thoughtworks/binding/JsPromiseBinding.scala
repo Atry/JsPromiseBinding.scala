@@ -34,81 +34,82 @@ object JsPromiseBinding {
 
 }
 
-/**
-  * A wrapper that wraps a [[scala.scalajs.js.Thenable]] to a [[com.thoughtworks.binding.Binding]].
+/** A wrapper that wraps a [[scala.scalajs.js.Thenable]] to a [[com.thoughtworks.binding.Binding]].
   *
-  * @example This [[JsPromiseBinding]] will cache the result of the `thenable`.
+  * @example
+  *   This [[JsPromiseBinding]] will cache the result of the `thenable`.
   *
-  *          Given a [[scala.scalajs.js.Thenable]] that will be delay executed.
-  *          {{{
-  *          import scala.scalajs.js
-  *          var upstreamEvaluationCount1 = 0
-  *          val delayedThenable = js.Promise.resolve[Unit](()).`then`[Double] { case () =>
-  *            upstreamEvaluationCount1 += 1
-  *            math.random
-  *          }
-  *          }}}
+  * Given a [[scala.scalajs.js.Thenable]] that will be delay executed.
+  * {{{
+  *           import scala.scalajs.js
+  *           var upstreamEvaluationCount1 = 0
+  *           val delayedThenable = js.Promise.resolve[Unit](()).`then`[Double] { case () =>
+  *             upstreamEvaluationCount1 += 1
+  *             math.random
+  *           }
+  * }}}
   *
-  *          The execution will not be performed right now.
+  * The execution will not be performed right now.
   *
-  *          {{{
-  *          val jsPromiseBinding = JsPromiseBinding(delayedThenable)
-  *          upstreamEvaluationCount1 should be(0)
-  *          }}}
+  * {{{
+  *           val jsPromiseBinding = JsPromiseBinding(delayedThenable)
+  *           upstreamEvaluationCount1 should be(0)
+  * }}}
   *
-  *          When there are multiple usages of `jsPromiseBinding`, each usage should be triggered with the same value.
+  * When there are multiple usages of `jsPromiseBinding`, each usage should be triggered with the same value.
   *
-  *          {{{
-  *          var evaluationCount1 = 0
-  *          var evaluationCount2 = 0
-  *          var evaluationCount3 = 0
+  * {{{
+  *           var evaluationCount1 = 0
+  *           var evaluationCount2 = 0
+  *           var evaluationCount3 = 0
   *
-  *          val usage1 = Binding {
-  *            jsPromiseBinding.bind match {
-  *              case Some(Right(value)) =>
-  *                evaluationCount1 += 1
-  *              case _ =>
-  *            }
-  *          }
+  *           val usage1 = Binding {
+  *             jsPromiseBinding.bind match {
+  *               case Some(Right(value)) =>
+  *                 evaluationCount1 += 1
+  *               case _ =>
+  *             }
+  *           }
   *
-  *          val usage2 = Binding {
-  *            jsPromiseBinding.bind match {
-  *              case Some(Right(value)) =>
-  *                evaluationCount2 += 1
+  *           val usage2 = Binding {
+  *             jsPromiseBinding.bind match {
+  *               case Some(Right(value)) =>
+  *                 evaluationCount2 += 1
   *
-  *                val usage3 = Binding {
-  *                  jsPromiseBinding.bind match {
-  *                    case Some(Right(value)) =>
-  *                      evaluationCount3 += 1
-  *                    case _ =>
-  *                  }
-  *                }
+  *                 val usage3 = Binding {
+  *                   jsPromiseBinding.bind match {
+  *                     case Some(Right(value)) =>
+  *                       evaluationCount3 += 1
+  *                     case _ =>
+  *                   }
+  *                 }
   *
-  *                val _ = usage1.bind
-  *                usage3.bind
-  *              case _ =>
-  *            }
-  *          }
+  *                 val _ = usage1.bind
+  *                 usage3.bind
+  *               case _ =>
+  *             }
+  *           }
   *
-  *          usage2.watch()
+  *           usage2.watch()
   *
-  *          upstreamEvaluationCount1 should be(0)
-  *          evaluationCount1 should be(0)
-  *          evaluationCount2 should be(0)
-  *          evaluationCount3 should be(0)
-  *          }}}
+  *           upstreamEvaluationCount1 should be(0)
+  *           evaluationCount1 should be(0)
+  *           evaluationCount2 should be(0)
+  *           evaluationCount3 should be(0)
+  * }}}
   *
-  *          And each usage should be triggered once and only once.
+  * And each usage should be triggered once and only once.
   *
-  *          {{{
-  *          delayedThenable.toFuture.map { _ =>
-  *            upstreamEvaluationCount1 should be(1)
-  *            evaluationCount1 should be(1)
-  *            evaluationCount2 should be(1)
-  *            evaluationCount3 should be(1)
-  *          }
-  *          }}}
-  * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
+  * {{{
+  *           delayedThenable.toFuture.map { _ =>
+  *             upstreamEvaluationCount1 should be(1)
+  *             evaluationCount1 should be(1)
+  *             evaluationCount2 should be(1)
+  *             evaluationCount3 should be(1)
+  *           }
+  * }}}
+  * @author
+  *   杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
 final class JsPromiseBinding[A](thenable: Thenable[A]) extends Binding[Option[Either[Any, A]]] {
 
@@ -141,11 +142,14 @@ final class JsPromiseBinding[A](thenable: Thenable[A]) extends Binding[Option[Ei
     publisher += listener
     if (!isHandlerRegistered) {
       isHandlerRegistered = true
-      thenable.`then`[Unit]({ result: A =>
-        handler(Right(result))
-      }, { error: Any =>
-        handler(Left(error))
-      }: js.Function1[Any, Unit | Thenable[Unit]])
+      thenable.`then`[Unit](
+        { result: A =>
+          handler(Right(result))
+        },
+        { error: Any =>
+          handler(Left(error))
+        }: js.Function1[Any, Unit | Thenable[Unit]]
+      )
     }
   }
 }
